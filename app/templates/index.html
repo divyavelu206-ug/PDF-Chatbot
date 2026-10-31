@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Chatbot – Retrieval Augmented Generation (RAG)</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Google Fonts for premium modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <div class="app-container">
+        <!-- Floating Navigation Header -->
+        <header class="app-header">
+            <div class="header-branding">
+                <div class="logo-box">
+                    <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <div class="title-row">
+                        <h1>PDF Chatbot</h1>
+                        <span class="badge-rag">RAG Engine</span>
+                    </div>
+                    <p class="tagline">Contextual Intelligence powered by FastAPI, FAISS & Groq</p>
+                </div>
+            </div>
+            <div class="system-status">
+                <span class="status-indicator"></span>
+                <span class="status-text">System Online</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace Grid -->
+        <main class="main-layout">
+            <!-- Left Column: PDF Ingestion Panel -->
+            <section class="card upload-card">
+                <div class="card-header">
+                    <div class="header-step-pill">01</div>
+                    <div class="header-title-group">
+                        <h2>Document Source</h2>
+                        <span class="card-subtitle">Upload & vector-index your PDF</span>
+                    </div>
+                </div>
+
+                <form id="upload-form" class="upload-area">
+                    <input type="file" id="pdf-file-input" accept=".pdf" class="file-input" />
+                    
+                    <label for="pdf-file-input" class="file-dropzone" id="dropzone">
+                        <div class="dropzone-visual">
+                            <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <div class="dropzone-text-group">
+                            <p class="dropzone-primary"><strong>Choose a PDF</strong> or drop it here</p>
+                            <span class="file-types-hint">Supports text-based PDF documents</span>
+                        </div>
+                    </label>
+
+                    <!-- File Staged Pill -->
+                    <div id="file-selected-info" class="file-staged-pill hidden">
+                        <div class="staged-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                        </div>
+                        <span id="selected-filename" class="staged-filename" title="Selected file">No file selected</span>
+                        <button type="button" id="clear-file-btn" class="clear-btn" title="Remove selection">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <button type="submit" id="upload-btn" class="btn btn-primary" disabled>
+                        <span class="btn-text">Upload & Process PDF</span>
+                        <span class="btn-spinner hidden"></span>
+                    </button>
+                </form>
+
+                <!-- Feedback Alert Container -->
+                <div id="upload-alert" class="alert hidden" role="alert">
+                    <span id="upload-alert-icon" class="alert-icon"></span>
+                    <div id="upload-alert-message" class="alert-message"></div>
+                </div>
+
+                <!-- Active Document Meta Card (Zero Overflow Guaranteed) -->
+                <div id="doc-meta-badge" class="doc-meta-badge hidden">
+                    <div class="meta-badge-top">
+                        <span class="live-pulse"></span>
+                        <span class="meta-header-title">Active Knowledge Base</span>
+                    </div>
+
+                    <div class="doc-meta-inner">
+                        <div class="meta-icon-block">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                        </div>
+                        <div class="meta-details-block">
+                            <span class="meta-tag-label">Active Document</span>
+                            <div class="meta-filename-truncate" id="meta-doc-name-wrapper">
+                                <span id="meta-doc-name" class="meta-filename" title="">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="meta-metrics-row">
+                        <div class="metric-chip">
+                            <span class="metric-icon">⚡</span>
+                            <span class="metric-text"><strong id="meta-chunks-count">0</strong> FAISS Chunks</span>
+                        </div>
+                        <div class="metric-chip ready-chip">
+                            <span class="metric-icon">✓</span>
+                            <span class="metric-text">Indexed & Ready</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Column: Interactive QA Panel -->
+            <section class="card qa-card">
+                <div class="card-header">
+                    <div class="header-step-pill">02</div>
+                    <div class="header-title-group">
+                        <h2>Ask Questions</h2>
+                        <span class="card-subtitle">Retrieval Augmented reasoning with Groq</span>
+                    </div>
+                </div>
+
+                <!-- Prompt Suggestions Chips -->
+                <div class="suggestion-chips-container" id="suggestion-chips">
+                    <span class="chip-hint">Try asking:</span>
+                    <button type="button" class="suggestion-chip" data-prompt="What is the main topic of this document?">Main topic</button>
+                    <button type="button" class="suggestion-chip" data-prompt="Can you summarize the core points in 3 bullets?">Summary</button>
+                    <button type="button" class="suggestion-chip" data-prompt="What are the key conclusions or takeaways?">Key conclusions</button>
+                </div>
+
+                <!-- Question Input Form -->
+                <form id="ask-form" class="question-form">
+                    <div class="input-box-wrapper">
+                        <input 
+                            type="text" 
+                            id="question-input" 
+                            placeholder="Ask any question about your uploaded PDF..." 
+                            autocomplete="off"
+                            required 
+                            disabled
+                        />
+                        <button type="submit" id="ask-btn" class="btn btn-primary ask-submit-btn" disabled>
+                            <span class="btn-text">
+                                <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                                <span>Ask</span>
+                            </span>
+                            <span class="btn-spinner hidden"></span>
+                        </button>
+                    </div>
+                    <div class="input-footer-row">
+                        <small id="ask-hint" class="input-hint">Upload a PDF document to begin asking questions.</small>
+                    </div>
+                </form>
+
+                <!-- Modern Shimmer/Pulse Loading Indicator -->
+                <div id="loading-container" class="loading-container hidden">
+                    <div class="rag-loader">
+                        <div class="loader-circle"></div>
+                        <div class="loader-pulse"></div>
+                    </div>
+                    <div class="loading-text-wrap">
+                        <p class="loading-title">Retrieving context & generating answer</p>
+                        <p class="loading-sub">FAISS semantic search ➔ Groq LLM</p>
+                    </div>
+                </div>
+
+                <!-- QA Error Alert -->
+                <div id="qa-alert" class="alert alert-error hidden" role="alert">
+                    <span class="alert-icon">⚠️</span>
+                    <div id="qa-alert-message" class="alert-message"></div>
+                </div>
+
+                <!-- Answer Display Section -->
+                <div id="answer-section" class="answer-section hidden">
+                    <div class="answer-header-row">
+                        <div class="section-title">
+                            <span class="title-icon">💡</span>
+                            <h3>AI Answer</h3>
+                        </div>
+                        <button type="button" id="copy-answer-btn" class="copy-btn" title="Copy answer to clipboard">
+                            <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span class="copy-text">Copy</span>
+                        </button>
+                    </div>
+
+                    <div id="answer-content" class="answer-box"></div>
+
+                    <!-- Source Passages Section -->
+                    <div class="sources-container">
+                        <div class="sources-header-row">
+                            <div class="section-title">
+                                <span class="title-icon">🔍</span>
+                                <h3>Retrieved Sources</h3>
+                            </div>
+                            <span class="sources-badge">Top 3 FAISS Chunks</span>
+                        </div>
+                        <div id="sources-list" class="sources-list"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="tech-pills">
+                <span class="pill"><span class="dot python"></span>Python</span>
+                <span class="pill"><span class="dot fastapi"></span>FastAPI</span>
+                <span class="pill"><span class="dot pypdf"></span>PyPDF</span>
+                <span class="pill"><span class="dot langchain"></span>LangChain Splitters</span>
+                <span class="pill"><span class="dot sentence"></span>Sentence Transformers</span>
+                <span class="pill"><span class="dot faiss"></span>FAISS</span>
+                <span class="pill"><span class="dot groq"></span>Groq Cloud</span>
+            </div>
+            <p class="footer-note">Clean Architecture • Retrieval Augmented Generation • Local Embeddings</p>
+        </footer>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
